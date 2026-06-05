@@ -167,7 +167,7 @@ Configured a Windows 11 Enterprise Evaluation VM on the laptop as the monitored 
 - Verified 4,879+ events flowing in Kibana
 
 ![Elastic Fleet Agents](screenshots/Fleet_agents1.png)
-![Kibana Pipeline Verified](screenshots/security-onion-dashboard-live.png)
+![Kibana Pipeline Verified](screenshots/SO_Hunt_Windows11_Endpoint_Sysmon.png)
 
 📄 [Full Phase 2 Documentation →](docs/04-endpoint-vm-setup.md)
 
