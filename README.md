@@ -62,31 +62,12 @@ The build spans two physical machines connected over a home network, with a Secu
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    HOME NETWORK 192.168.0.0/24              │
-│                                                             │
-│  ┌──────────────────────┐    ┌─────────────────────────┐   │
-│  │   DESKTOP SOC MACHINE │    │  LAPTOP ENDPOINT MACHINE │   │
-│  │   192.168.0.2        │    │  192.168.0.15 (DHCP)    │   │
-│  │                      │    │                         │   │
-│  │  ┌────────────────┐  │    │  ┌───────────────────┐  │   │
-│  │  │ Security Onion │  │    │  │  Windows 11 VM    │  │   │
-│  │  │ 3.1.0          │  │    │  │  Enterprise Eval  │  │   │
-│  │  │ 192.168.0.50   │◄─┼────┼──│                   │  │   │
-│  │  │                │  │    │  │  - Sysmon v15.20  │  │   │
-│  │  │ - Kibana       │  │    │  │  - Elastic Agent  │  │   │
-│  │  │ - Elasticsearch│  │    │  │  - Invoke-Atomic  │  │   │
-│  │  │ - Zeek         │  │    │  │  - PowerShell 7   │  │   │
-│  │  │ - Suricata     │  │    │  └───────────────────┘  │   │
-│  │  │ - Elastic Fleet│  │    │                         │   │
-│  │  └────────────────┘  │    └─────────────────────────┘   │
-│  └──────────────────────┘                                   │
-└─────────────────────────────────────────────────────────────┘
+[![Home SOC Architecture Diagram](screenshots/architecture-diagram.png)](https://jhoward98.github.io/home-soc-build/soc-architecture.html)
 
-Telemetry Flow:
-Sysmon Events → Elastic Agent → Security Onion Fleet → Elasticsearch → Kibana
-```
+> Click the diagram to open the fully interactive version — each component is clickable and shows detailed configuration notes, tool versions, and detection context.
+
+**Telemetry Flow:**
+`Sysmon Events` → `Elastic Agent` → `Security Onion Fleet` → `Elasticsearch` → `Kibana`
 
 ### Hardware Specifications
 

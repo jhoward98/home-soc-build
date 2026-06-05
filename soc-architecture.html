@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home SOC Architecture — Joshua Howard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --surface3: #1e2330;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.15);
+    --blue-glow: rgba(59,130,246,0.08);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.15);
+    --amber-glow: rgba(245,158,11,0.08);
+    --green: #10b981;
+    --green-dim: rgba(16,185,129,0.15);
+    --purple: #8b5cf6;
+    --purple-dim: rgba(139,92,246,0.15);
+    --red: #ef4444;
+    --gray: #6b7280;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    padding: 40px 24px 60px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ── */
+  .header {
+    margin-bottom: 40px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1px solid;
+  }
+  .badge-blue  { color: var(--blue);  border-color: rgba(59,130,246,0.4);  background: var(--blue-dim); }
+  .badge-green { color: var(--green); border-color: rgba(16,185,129,0.4);  background: var(--green-dim); }
+  .badge-amber { color: var(--amber); border-color: rgba(245,158,11,0.4);  background: var(--amber-dim); }
+  .badge-gray  { color: var(--text2); border-color: var(--border2);         background: var(--surface2); }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.1;
+    letter-spacing: -.02em;
+  }
+  h1 span { color: var(--blue); }
+
+  .subtitle {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 6px;
+    letter-spacing: .04em;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--green);
+    background: var(--green-dim);
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 20px;
+    padding: 5px 12px;
+    white-space: nowrap;
+  }
+  .pulse {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ── Main layout ── */
+  .arch-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* ── Machine cards ── */
+  .machine-card {
+    border-radius: 12px;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    overflow: hidden;
+    position: relative;
+    animation: fadeUp 0.7s ease both;
+    transition: border-color 0.3s ease;
+  }
+  .machine-card:hover { border-color: rgba(255,255,255,0.2); }
+
+  .machine-card.soc  { animation-delay: 0.1s; }
+  .machine-card.endpoint { animation-delay: 0.2s; }
+
+  .machine-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+    border-radius: 12px;
+  }
+  .machine-card.soc::before      { background: radial-gradient(ellipse at 30% 0%, var(--blue-glow), transparent 60%); }
+  .machine-card.endpoint::before { background: radial-gradient(ellipse at 70% 0%, var(--amber-glow), transparent 60%); }
+  .machine-card:hover::before    { opacity: 1; }
+
+  .machine-header {
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .machine-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .soc      .machine-label { color: var(--blue); }
+  .endpoint .machine-label { color: var(--amber); }
+
+  .machine-title {
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .machine-meta {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 4px;
+    letter-spacing: .02em;
+  }
+
+  .ip-chip {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+  .soc      .ip-chip { color: var(--blue);  border-color: rgba(59,130,246,0.3);  background: var(--blue-dim); }
+  .endpoint .ip-chip { color: var(--amber); border-color: rgba(245,158,11,0.3);  background: var(--amber-dim); }
+
+  /* ── VM box inside machine ── */
+  .vm-box {
+    margin: 14px;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .vm-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .soc      .vm-header { background: var(--blue-dim);  color: var(--blue); }
+  .endpoint .vm-header { background: var(--amber-dim); color: var(--amber); }
+
+  .vm-header-right {
+    font-size: 9px;
+    font-weight: 400;
+    opacity: .7;
+    letter-spacing: .04em;
+    color: var(--text2);
+  }
+
+  /* ── Component rows ── */
+  .components { padding: 8px 0; }
+
+  .comp-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .comp-row:last-child { border-bottom: none; }
+  .comp-row:hover { background: rgba(255,255,255,0.03); }
+
+  .comp-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .soc      .comp-dot { background: var(--blue); }
+  .endpoint .comp-dot { background: var(--amber); }
+
+  .comp-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+    white-space: nowrap;
+  }
+
+  .comp-desc {
+    font-size: 10px;
+    color: var(--text3);
+    text-align: right;
+  }
+
+  .comp-tag {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .tag-ok  { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(16,185,129,0.3); }
+  .tag-run { background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(59,130,246,0.3); }
+  .tag-sim { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(245,158,11,0.3); }
+
+  /* NIC strip */
+  .nic-strip {
+    display: flex;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--surface3);
+    border-top: 1px solid var(--border);
+  }
+  .nic-item {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    background: var(--surface2);
+  }
+  .nic-label { font-size: 9px; font-weight: 700; letter-spacing: .1em; color: var(--text3); text-transform: uppercase; }
+  .nic-val   { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+  /* ── Connection arrow ── */
+  .connection-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 4px 0;
+    animation: fadeUp 0.7s 0.35s ease both;
+  }
+
+  .conn-line {
+    height: 2px;
+    flex: 1;
+    background: linear-gradient(90deg, transparent, var(--green), var(--green), transparent);
+    opacity: .5;
+    position: relative;
+  }
+
+  .conn-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 0 16px;
+  }
+
+  .conn-pill {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--green);
+    background: var(--green-dim);
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 4px;
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+
+  .conn-arrow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: .05em;
+  }
+
+  .arrow-line {
+    width: 20px;
+    height: 1px;
+    background: var(--green);
+    opacity: .5;
+    position: relative;
+  }
+  .arrow-line::after {
+    content: '';
+    position: absolute;
+    right: 0; top: -3px;
+    border-left: 5px solid rgba(16,185,129,.5);
+    border-top: 3px solid transparent;
+    border-bottom: 3px solid transparent;
+  }
+
+  /* ── Telemetry flow ── */
+  .telemetry-section {
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.7s 0.4s ease both;
+  }
+
+  .section-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .flow-chain {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+
+  .flow-node {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+  }
+  .flow-node:hover {
+    border-color: rgba(255,255,255,0.2);
+    background: var(--surface3);
+    transform: translateY(-1px);
+  }
+
+  .flow-node-icon {
+    width: 24px; height: 24px;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .flow-node-text { line-height: 1.3; }
+  .flow-node-name { font-size: 11px; font-weight: 600; color: var(--text); }
+  .flow-node-sub  { font-size: 9px;  color: var(--text3); margin-top: 1px; }
+
+  .flow-arrow {
+    padding: 0 8px;
+    color: var(--text3);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── MITRE ATT&CK section ── */
+  .mitre-section {
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 20px 24px;
+    animation: fadeUp 0.7s 0.5s ease both;
+  }
+
+  .mitre-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .mitre-card {
+    padding: 14px;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    background: var(--surface2);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .mitre-card:hover {
+    border-color: rgba(139,92,246,0.4);
+    background: var(--surface3);
+    transform: translateY(-2px);
+  }
+  .mitre-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--purple);
+    border-radius: 2px 0 0 2px;
+  }
+
+  .mitre-tid {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--purple);
+    letter-spacing: .06em;
+    margin-bottom: 4px;
+  }
+  .mitre-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .mitre-tactic {
+    font-size: 9px;
+    color: var(--text3);
+  }
+  .mitre-status {
+    position: absolute;
+    right: 12px; top: 12px;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  .status-ready  { background: rgba(245,158,11,.15); color: var(--amber); border: 1px solid rgba(245,158,11,.3); }
+
+  /* ── Tooltip / detail panel ── */
+  .detail-panel {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120px);
+    width: min(480px, calc(100vw - 40px));
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    z-index: 100;
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+  .detail-panel.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .detail-title {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .detail-close {
+    font-size: 16px;
+    color: var(--text3);
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    border: none;
+    background: none;
+    color: var(--text2);
+  }
+  .detail-close:hover { background: var(--surface3); }
+
+  .detail-body {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .detail-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .detail-chip {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border2);
+    background: var(--surface3);
+    color: var(--text2);
+    letter-spacing: .05em;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: .06em;
+    animation: fadeUp 0.7s 0.6s ease both;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+    50%       { opacity: 0.8; box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .arch-layout { grid-template-columns: 1fr; }
+    .mitre-grid  { grid-template-columns: 1fr; }
+    .connection-row { display: none; }
+    .flow-chain { gap: 6px; }
+    .flow-arrow { display: none; }
+    .ip-chip { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="badge-row">
+          <span class="badge badge-blue">Security Onion 3.1.0</span>
+          <span class="badge badge-green">Elastic Stack</span>
+          <span class="badge badge-amber">MITRE ATT&CK</span>
+          <span class="badge badge-gray">VMware Workstation</span>
+          <span class="badge badge-gray">Sysmon v15.20</span>
+        </div>
+        <h1>Home <span>SOC</span> Architecture</h1>
+        <p class="subtitle">Joshua Howard · University of Arizona · BAS Cyber Operations Defense &amp; Forensics</p>
+      </div>
+      <div class="status-pill">
+        <span class="pulse"></span>
+        Pipeline live · 4,879+ events
+      </div>
+    </div>
+  </div>
+
+  <!-- Architecture machines -->
+  <div class="arch-layout">
+
+    <!-- SOC / Desktop -->
+    <div class="machine-card soc">
+      <div class="machine-header">
+        <div class="machine-label">Desktop SOC machine · 192.168.0.2</div>
+        <div class="machine-title">Security Onion Stack</div>
+        <div class="machine-meta">AMD Ryzen 9 · 64 GB RAM · 1 TB · Ethernet</div>
+        <span class="ip-chip">VM: 192.168.0.50</span>
+      </div>
+      <div class="vm-box">
+        <div class="vm-header">
+          Security-Onion-SOC VM — Oracle Linux 9.7
+          <span class="vm-header-right">32 GB · 8 vCPU · 500 GB NVMe</span>
+        </div>
+        <div class="components">
+          <div class="comp-row" onclick="showDetail('kibana')">
+            <span class="comp-dot"></span>
+            <span class="comp-name">Kibana</span>
+            <span class="comp-desc">Dashboards · Hunt · Alerts</span>
+            <span class="comp-tag tag-ok">LIVE</span>
+          </div>
+          <div class="comp-row" onclick="showDetail('elasticsearch')">
+            <span class="comp-dot"></span>
+            <span class="comp-name">Elasticsearch</span>
+            <span class="comp-desc">Event index &amp; storage</span>
+            <span class="comp-tag tag-run">INDEXING</span>
+          </div>
+          <div class="comp-row" onclick="showDetail('fleet')">
+            <span class="comp-dot"></span>
+            <span class="comp-name">Elastic Fleet</span>
+            <span class="comp-desc">Agent enrollment · policy mgmt</span>
+            <span class="comp-tag tag-ok">HEALTHY</span>
+          </div>
+          <div class="comp-row" onclick="showDetail('zeek')">
+            <span class="comp-dot"></span>
+            <span class="comp-name">Zeek</span>
+            <span class="comp-desc">Network security monitor</span>
+            <span class="comp-tag tag-run">NSM</span>
+          </div>
+          <div class="comp-row" onclick="showDetail('suricata')">
+            <span class="comp-dot"></span>
+            <span class="comp-name">Suricata</span>
+            <span class="comp-desc">Intrusion detection · NIDS</span>
+            <span class="comp-tag tag-run">IDS</span>
+          </div>
+        </div>
+        <div class="nic-strip">
+          <div class="nic-item">
+            <div class="nic-label">ens160 · Management</div>
+            <div class="nic-val">Bridged · Static 192.168.0.50</div>
+          </div>
+          <div class="nic-item">
+            <div class="nic-label">ens224 · Monitor</div>
+            <div class="nic-val">Host-only · Passive capture</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Endpoint / Laptop -->
+    <div class="machine-card endpoint">
+      <div class="machine-header">
+        <div class="machine-label">Laptop endpoint machine · 192.168.0.15 (DHCP)</div>
+        <div class="machine-title">Windows 11 Endpoint</div>
+        <div class="machine-meta">Ryzen 9 9955HX · 64 GB RAM · 3.68 TB · Wi-Fi (main router)</div>
+        <span class="ip-chip">DESKTOP-N063J06</span>
+      </div>
+      <div class="vm-box">
+        <div class="vm-header">
+          Windows11-Endpoint VM — Win 11 Enterprise Eval
+          <span class="vm-header-right">8 GB · 4 vCPU · 100 GB NVMe</span>
+        </div>
+        <div class="components">
+          <div class="comp-row" onclick="showDetail('sysmon')">
+            <span class="comp-dot"></span>
+            <span class="comp-name">Sysmon v15.20</span>
+            <span class="comp-desc">SwiftOnSecurity config · schema 4.50</span>
+            <span class="comp-tag tag-ok">RUNNING</span>
+          </div>
+          <div class="comp-row" onclick="showDetail('agent')">
+            <span class="comp-dot"></span>
+            <span class="comp-name">Elastic Agent</span>
+            <span class="comp-desc">policy: endpoints-initial</span>
+            <span class="comp-tag tag-ok">HEALTHY</span>
+          </div>
+          <div class="comp-row" onclick="showDetail('atomic')">
+            <span class="comp-dot"></span>
+            <span class="comp-name">Invoke-AtomicRedTeam</span>
+            <span class="comp-desc">v2.1.0 · C:\AtomicRedTeam</span>
+            <span class="comp-tag tag-sim">ATT&CK</span>
+          </div>
+          <div class="comp-row" onclick="showDetail('powershell')">
+            <span class="comp-dot"></span>
+            <span class="comp-name">PowerShell 7.6.2</span>
+            <span class="comp-desc">Auto-loads via PS profile</span>
+            <span class="comp-tag tag-run">READY</span>
+          </div>
+          <div class="comp-row" onclick="showDetail('vmtools')">
+            <span class="comp-dot"></span>
+            <span class="comp-name">VMware Tools</span>
+            <span class="comp-desc">Display optimized · snapshots enabled</span>
+            <span class="comp-tag tag-ok">OK</span>
+          </div>
+        </div>
+        <div class="nic-strip">
+          <div class="nic-item" style="flex:2">
+            <div class="nic-label">NIC · Bridged (Automatic)</div>
+            <div class="nic-val">DHCP · Requires main router Wi-Fi (not Google Nest)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection arrow row -->
+  <div class="connection-row">
+    <div class="conn-line"></div>
+    <div class="conn-center">
+      <span class="conn-pill">192.168.0.0/24</span>
+      <div class="conn-arrow">
+        <span>Elastic Agent telemetry</span>
+        <div class="arrow-line"></div>
+        <span style="transform:scaleX(-1);display:inline-block">▶</span>
+        <span>Fleet enrollment</span>
+      </div>
+    </div>
+    <div class="conn-line"></div>
+  </div>
+
+  <!-- Telemetry Flow -->
+  <div class="telemetry-section">
+    <div class="section-label">Telemetry pipeline — detection flow</div>
+    <div class="flow-chain">
+      <div class="flow-node" onclick="showDetail('sysmon-flow')">
+        <div class="flow-node-icon" style="background:var(--amber-dim);">🔍</div>
+        <div class="flow-node-text">
+          <div class="flow-node-name">Sysmon</div>
+          <div class="flow-node-sub">Windows event telemetry</div>
+        </div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" onclick="showDetail('agent-flow')">
+        <div class="flow-node-icon" style="background:var(--amber-dim);">📡</div>
+        <div class="flow-node-text">
+          <div class="flow-node-name">Elastic Agent</div>
+          <div class="flow-node-sub">Collection &amp; shipping</div>
+        </div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" onclick="showDetail('fleet-flow')">
+        <div class="flow-node-icon" style="background:var(--green-dim);">🔗</div>
+        <div class="flow-node-text">
+          <div class="flow-node-name">SO Fleet</div>
+          <div class="flow-node-sub">Agent management</div>
+        </div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" onclick="showDetail('es-flow')">
+        <div class="flow-node-icon" style="background:var(--blue-dim);">🗄️</div>
+        <div class="flow-node-text">
+          <div class="flow-node-name">Elasticsearch</div>
+          <div class="flow-node-sub">Indexing &amp; storage</div>
+        </div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node" onclick="showDetail('kibana-flow')">
+        <div class="flow-node-icon" style="background:var(--blue-dim);">📊</div>
+        <div class="flow-node-text">
+          <div class="flow-node-name">Kibana</div>
+          <div class="flow-node-sub">Hunt · Alerts · Dashboards</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap">
+      <div style="font-size:10px;color:var(--text3)">Confirmed datasets:</div>
+      <span style="font-size:10px;padding:2px 8px;border-radius:3px;background:var(--surface3);border:1px solid var(--border2);color:var(--text2)">windows.sysmon_operational — 2,787</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:3px;background:var(--surface3);border:1px solid var(--border2);color:var(--text2)">system.security — 821</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:3px;background:var(--surface3);border:1px solid var(--border2);color:var(--text2)">elastic_agent.endp — 676</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:3px;background:var(--surface3);border:1px solid var(--border2);color:var(--text2)">winlog.winlog — 146</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:3px;background:var(--surface3);border:1px solid var(--border2);color:var(--text2)">windows.powershell — 14</span>
+    </div>
+  </div>
+
+  <!-- MITRE ATT&CK -->
+  <div class="mitre-section">
+    <div class="section-label">MITRE ATT&CK — Phase 3 simulation targets</div>
+    <div class="mitre-grid">
+      <div class="mitre-card" onclick="showDetail('t1059')">
+        <span class="mitre-status status-ready">PHASE 3</span>
+        <div class="mitre-tid">T1059.001</div>
+        <div class="mitre-name">PowerShell Execution</div>
+        <div class="mitre-tactic">Execution · Command &amp; Scripting</div>
+      </div>
+      <div class="mitre-card" onclick="showDetail('t1003')">
+        <span class="mitre-status status-ready">PHASE 3</span>
+        <div class="mitre-tid">T1003</div>
+        <div class="mitre-name">Credential Dumping</div>
+        <div class="mitre-tactic">Credential Access</div>
+      </div>
+      <div class="mitre-card" onclick="showDetail('t1078')">
+        <span class="mitre-status status-ready">PHASE 3</span>
+        <div class="mitre-tid">T1078</div>
+        <div class="mitre-name">Valid Accounts</div>
+        <div class="mitre-tactic">Defense Evasion · Persistence</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>home-soc-build · github.com/[username]/home-soc-build</span>
+    <span>Security Onion 3.1.0 · Elastic Agent · Sysmon v15.20 · Invoke-AtomicRedTeam v2.1.0</span>
+    <span>NSA CAE-CO aligned · University of Arizona</span>
+  </div>
+
+</div>
+
+<!-- Detail panel -->
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <div class="detail-title" id="detailTitle"></div>
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+  <div class="detail-meta" id="detailMeta"></div>
+</div>
+
+<script>
+const details = {
+  kibana: {
+    title: 'Kibana — Hunt & Alert Views',
+    body: 'The primary analyst interface for Security Onion. Hunt view is bookmarked with the query: host.hostname: DESKTOP-N063J06 AND event.dataset: windows.sysmon_operational. Used to verify telemetry pipeline and triage attack simulation detections in Phase 3.',
+    chips: ['https://192.168.0.50', 'SO Hunt view', 'Alerts view', 'Dashboard']
+  },
+  elasticsearch: {
+    title: 'Elasticsearch — Event Storage',
+    body: 'Indexes all telemetry forwarded by the Elastic Agent from the Windows 11 endpoint. Currently holding 4,879+ events across 5 confirmed data streams. Core backend for all Kibana queries.',
+    chips: ['4,879+ events', 'sysmon_operational', 'system.security', 'elastic_agent.endp']
+  },
+  fleet: {
+    title: 'Elastic Fleet — Agent Management',
+    body: 'Manages enrolled Elastic Agents across the SOC. Windows 11 endpoint is enrolled under policy "endpoints-initial" with status HEALTHY. Firewall hostgroup elastic_agent_endpoint configured for 192.168.0.0/24.',
+    chips: ['policy: endpoints-initial', 'DESKTOP-N063J06', 'HEALTHY', '192.168.0.0/24']
+  },
+  zeek: {
+    title: 'Zeek — Network Security Monitor',
+    body: 'Passive network traffic analyzer running on the host-only monitor interface (ens224). Generates connection logs, DNS logs, HTTP logs, and protocol-level metadata for threat hunting and IR analysis.',
+    chips: ['ens224 monitor', 'conn.log', 'dns.log', 'http.log']
+  },
+  suricata: {
+    title: 'Suricata — Intrusion Detection',
+    body: 'Network-based IDS/IPS running inline on the Security Onion standalone node. Applies signature-based detection rules against network traffic captured on the monitor interface.',
+    chips: ['NIDS/IPS', 'Signature rules', 'Alert generation', 'ens224']
+  },
+  sysmon: {
+    title: 'Sysmon v15.20 — System Monitor',
+    body: 'Microsoft Sysinternals Sysmon installed on the Windows 11 endpoint with the SwiftOnSecurity configuration (sysmonconfig-export.xml, schema 4.50). Service Sysmon64 verified running. Events visible in Windows Event Viewer under Microsoft-Windows-Sysmon/Operational.',
+    chips: ['Sysmon64 service', 'SwiftOnSecurity config', 'schema 4.50', 'Event ID 1,3,10,11...']
+  },
+  agent: {
+    title: 'Elastic Agent — Telemetry Collector',
+    body: 'Enrolled in Security Onion Fleet under policy "endpoints-initial". Collects Sysmon operational events, Windows Security logs, PowerShell logs, and agent health telemetry. Ships directly to Elasticsearch via Fleet. Firewall rules allow inbound from 192.168.0.0/24.',
+    chips: ['HEALTHY', 'endpoints-initial', 'Fleet enrolled', '192.168.0.15']
+  },
+  atomic: {
+    title: 'Invoke-AtomicRedTeam v2.1.0',
+    body: 'Installed to C:\\AtomicRedTeam\\invoke-atomicredteam with the atomics library at C:\\AtomicRedTeam\\atomics. Auto-loaded via PowerShell profile. Used in Phase 3 to simulate adversary techniques and verify detections in Security Onion Hunt and Alerts views. Always take a VM snapshot before running tests.',
+    chips: ['C:\\AtomicRedTeam', 'PS profile auto-load', 'T1059 · T1003 · T1078', 'Snapshot first!']
+  },
+  powershell: {
+    title: 'PowerShell 7.6.2',
+    body: 'Installed via winget on the Windows 11 endpoint. Profile configured to auto-load Invoke-AtomicRedTeam module on startup. Used both as the simulation execution environment and as a MITRE technique target (T1059.001).',
+    chips: ['winget install', 'PS profile configured', 'T1059.001 target', 'v7.6.2']
+  },
+  vmtools: {
+    title: 'VMware Tools',
+    body: 'Installed on Windows 11 endpoint VM for optimized display, drag-and-drop, and snapshot reliability. VMware Workstation Pro 26H1 is the hypervisor on the laptop. Note: G: drive on the desktop required Full Control permissions for Everyone to prevent VMware losing track of the .vmdk after shutdown.',
+    chips: ['Display optimized', 'Snapshot support', 'Pro 26H1', 'G: drive permissions fix']
+  },
+  t1059: {
+    title: 'T1059.001 — PowerShell',
+    body: 'Adversaries abuse PowerShell for execution. Invoke-Atomic simulates this by running encoded commands and script-block logging triggers. Detection in Security Onion via Sysmon Event ID 1 (Process Create) and Windows PowerShell logs. Confirms process execution telemetry end-to-end.',
+    chips: ['Tactic: Execution', 'Sysmon EID 1', 'PowerShell logs', 'windows.powershell dataset']
+  },
+  t1003: {
+    title: 'T1003 — OS Credential Dumping',
+    body: 'Simulates credential access techniques such as LSASS memory reads. Detection via Sysmon Event ID 10 (Process Access) targeting lsass.exe. Validates that the pipeline captures high-fidelity credential access telemetry into the Hunt view.',
+    chips: ['Tactic: Credential Access', 'Sysmon EID 10', 'lsass.exe access', 'Hunt detection']
+  },
+  t1078: {
+    title: 'T1078 — Valid Accounts',
+    body: 'Adversaries use legitimate credentials to maintain access and evade detection. Simulated via logon events using existing account credentials. Detection via Windows Security Event ID 4624 (Successful Logon) and 4672 (Special Privileges). Tests alert fidelity for account-based persistence.',
+    chips: ['Tactic: Defense Evasion', 'Tactic: Persistence', 'EID 4624 · 4672', 'system.security dataset']
+  }
+};
+
+const panel = document.getElementById('detailPanel');
+
+function showDetail(key) {
+  const d = details[key];
+  if (!d) return;
+  document.getElementById('detailTitle').textContent = d.title;
+  document.getElementById('detailBody').textContent = d.body;
+  const meta = document.getElementById('detailMeta');
+  meta.innerHTML = d.chips.map(c => `<span class="detail-chip">${c}</span>`).join('');
+  panel.classList.add('visible');
+}
+
+function closeDetail() {
+  panel.classList.remove('visible');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetail();
+});
+</script>
+</body>
+</html>
