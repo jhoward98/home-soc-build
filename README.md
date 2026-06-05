@@ -283,11 +283,14 @@ These are real troubleshooting events encountered during the build. Documented h
 **Fix:**
 1. Right-click the VMware folder on G: drive
 2. Select Properties > Security > Edit
-3. Add `Everyone` with `Full Control`
-4. Apply to all subfolders and files
-5. Click OK
+3. Click Add and enter your Windows username
+4. Grant Full Control to your user account
+5. Apply to all subfolders and files
+6. Click OK
 
-**Why this matters:** Permission issues on external or secondary drives are a common real-world VMware deployment problem. This fix applies to any VMware installation where VMs are stored on a non-system drive.
+> **Security Note:** Adding `Everyone` with Full Control is a common suggestion online but is overly permissive. Granting access to your specific user account instead follows the principle of least privilege and is the correct approach for any production or lab environment.
+
+**Why this matters:** Permission issues on external or secondary drives are a common real-world VMware deployment problem. Applying least privilege by granting access only to the required user account rather than Everyone demonstrates security-conscious thinking that directly maps to enterprise security hardening practices.
 
 ---
 
