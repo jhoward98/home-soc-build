@@ -16,7 +16,7 @@
 
 ## 📸 Live Dashboard
 
-![Security Onion Kibana Dashboard](screenshots/securityoniondashboardlive.png)
+![Security Onion Kibana Dashboard](screenshots/security-onion-dashboard-live.png)
 *Security Onion 3.1.0 Kibana dashboard showing 4,879+ events from Windows 11 endpoint DESKTOP-N063J06*
 
 ---
@@ -147,7 +147,7 @@ Deployed Security Onion 3.1.0 Standalone on a VMware VM running Oracle Linux Ser
 - Verified web interface at https://192.168.0.50
 - Confirmed Kibana collecting telemetry
 
-![Security Onion Dashboard Live](screenshots/securityoniondashboardlive.png)
+![Security Onion Dashboard Live](screenshots/security-onion-dashboard-live.png)
 
 📄 [Full Phase 1 Documentation →](docs/03-security-onion-install.md)
 
@@ -167,7 +167,7 @@ Configured a Windows 11 Enterprise Evaluation VM on the laptop as the monitored 
 - Verified 4,879+ events flowing in Kibana
 
 ![Elastic Fleet Agents](screenshots/Fleet_agents.png)
-![Kibana Pipeline Verified](screenshots/securityoniondashboardlive.png)
+![Kibana Pipeline Verified](screenshots/security-onion-dashboard-live.png)
 
 📄 [Full Phase 2 Documentation →](docs/04-endpoint-vm-setup.md)
 
@@ -225,7 +225,7 @@ The full telemetry pipeline was verified end to end before attack simulations be
 host.hostname: DESKTOP-N063J06 AND event.dataset: windows.sysmon_operational
 ```
 
-![SO Hunt Windows Endpoint Sysmon](screenshots/SO_Hunt__Windows11_Endpoint_Sysmon.png)
+![SO Hunt Windows Endpoint Sysmon](screenshots/SO_Hunt_Windows11_Endpoint_Sysmon.png)
 
 📄 [Full Pipeline Verification Documentation →](docs/07-pipeline-verification.md)
 
