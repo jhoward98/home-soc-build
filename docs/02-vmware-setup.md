@@ -67,7 +67,7 @@ Choose **Linux** as the guest operating system, then select **CentOS 8 64-bit** 
 
 Click Next.
 
-![VMware naming the VM and choosing the G drive location](../screenshots/vmwarevmnameandlocation.png)
+![VMware naming the VM and choosing the G drive location](../screenshots/vmware-vm-name-and-location.png)
 *Naming the VM Security-Onion-SOC and storing it on the G: drive.*
 
 ## Step 6: Configure processors
@@ -101,19 +101,19 @@ NVMe is the modern, high performance virtual disk interface and is what this bui
 - Click Next.
 - The disk file name auto-fills as `Security-Onion-SOC.vmdk`. Click Next.
 
-![VMware specifying a single 500 GB disk file](../screenshots/vmwarediskfile500gb.png)
+![VMware specifying a single 500 GB disk file](../screenshots/vmware-disk-file-500gb.png)
 *A single 500 GB disk file named Security-Onion-SOC.vmdk. Storing the disk as one file keeps things simple and performs well on a dedicated drive.*
 
 ## Step 11: Review and finish
 
 Review the summary. It should show the name, location, guest OS (CentOS 8 64-bit), a 500 GB disk, 32768 MB of memory, a bridged network adapter, and 8 CPU cores. Click Finish.
 
-![VMware Ready to Create summary screen](../screenshots/vmwarevmsummaryspecs.png)
+![VMware Ready to Create summary screen](../screenshots/vmware-vm-summary-specs.png)
 *The Ready to Create summary. The guest OS shows CentOS 8 64-bit, as explained in Step 4.*
 
 The VM now appears in your VMware Library, powered off.
 
-![VMware showing the created VM powered off and ready](../screenshots/vmwarevmcreatedready.png)
+![VMware showing the created VM powered off and ready](../screenshots/vmware-vm-created-ready.png)
 *Security-Onion-SOC created and powered off, with 32 GB RAM, 8 processors, and a 500 GB NVMe disk. The configuration file lives at G:\VMWare\Security-Onion-SOC\Security-Onion-SOC.vmx.*
 
 ## Step 12: Attach the Security Onion ISO
@@ -125,7 +125,7 @@ With the VM selected, click **Edit virtual machine settings**. On the Hardware t
 3. Click **Browse** and select `securityonion-3.1.0-20260528.iso` from your Downloads folder.
 4. Confirm **Connect at power on** is checked.
 
-![VMware CD/DVD pointed at the Security Onion ISO](../screenshots/vmwareisoattached.png)
+![VMware CD/DVD pointed at the Security Onion ISO](../screenshots/vmware-iso-attached.png)
 *The CD/DVD drive set to boot from the Security Onion 3.1.0 ISO, with Connect at power on enabled.*
 
 ## Step 13: Add the second network adapter (the monitor NIC)
@@ -138,7 +138,7 @@ This is the most important step in this document. Still in Virtual Machine Setti
 4. On the right, set its network connection to **Host-only**.
 5. Click **OK**.
 
-![VMware showing two network adapters, one bridged and one host-only](../screenshots/vmwaredualnicsetup.png)
+![VMware showing two network adapters, one bridged and one host-only](../screenshots/vmware-dual-nic-setup.png)
 *Network Adapter set to Bridged (the management interface) and Network Adapter 2 set to Host-only (the passive monitor interface).*
 
 You now have two network adapters:
