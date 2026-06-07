@@ -1,4 +1,4 @@
-# 🏠 Home SOC Build — Security Onion 3.1.0
+# 🏠 Home SOC Build - Security Onion 3.1.0
 
 ![Security Onion](https://img.shields.io/badge/Security%20Onion-3.1.0-4A90D9?style=for-the-badge&logo=linux&logoColor=white)
 ![Elastic Stack](https://img.shields.io/badge/Elastic%20Stack-Fleet%20%7C%20Kibana-005571?style=for-the-badge&logo=elastic&logoColor=white)
@@ -16,7 +16,7 @@
 
 ## 📸 Live Dashboard
 
-![Security Onion Kibana Dashboard](screenshots/security-onion-dashboard-live.png)
+![Security Onion Kibana Dashboard](screenshots/SO_Hunt_Windows11_Endpoint_Sysmon.png)
 *Security Onion 3.1.0 Kibana dashboard showing 4,879+ events from Windows 11 endpoint DESKTOP-N063J06*
 
 ---
@@ -64,7 +64,7 @@ The build spans two physical machines connected over a home network, with a Secu
 
 [![Home SOC Architecture Diagram](screenshots/architecture-diagram.png)](https://jhoward98.github.io/home-soc-build/soc-architecture.html)
 
-> Click the diagram to open the fully interactive version — each component is clickable and shows detailed configuration notes, tool versions, and detection context.
+> Click the diagram to open the fully interactive version. Each component is clickable and shows detailed configuration notes, tool versions, and detection context.
 
 **Telemetry Flow:**
 `Sysmon Events` → `Elastic Agent` → `Security Onion Fleet` → `Elasticsearch` → `Kibana`
@@ -116,7 +116,7 @@ The build spans two physical machines connected over a home network, with a Secu
 
 ## 📅 Build Phases
 
-### ✅ Phase 1 — Desktop SOC Machine (Complete)
+### ✅ Phase 1 - Desktop SOC Machine (Complete)
 
 Deployed Security Onion 3.1.0 Standalone on a VMware VM running Oracle Linux Server 9.7. Configured dual NIC setup with a bridged management interface and host-only monitor interface. Set static IP, configured DNS, and verified the web interface and Kibana were live.
 
@@ -134,7 +134,7 @@ Deployed Security Onion 3.1.0 Standalone on a VMware VM running Oracle Linux Ser
 
 ---
 
-### ✅ Phase 2 — Windows 11 Endpoint Setup (Complete)
+### ✅ Phase 2 - Windows 11 Endpoint Setup (Complete)
 
 Configured a Windows 11 Enterprise Evaluation VM on the laptop as the monitored endpoint. Installed Sysmon with the SwiftOnSecurity config for enhanced Windows telemetry. Installed Invoke-AtomicRedTeam and the full Atomic Red Team atomics library. Enrolled Elastic Agent in Security Onion Fleet and verified the end-to-end telemetry pipeline.
 
@@ -154,7 +154,7 @@ Configured a Windows 11 Enterprise Evaluation VM on the laptop as the monitored 
 
 ---
 
-### 🔄 Phase 3 — Attack Simulations (In Progress)
+### 🔄 Phase 3 - Attack Simulations (In Progress)
 
 Running MITRE ATT&CK mapped attack simulations using Invoke-AtomicRedTeam against the Windows 11 endpoint and verifying detections in Security Onion Hunt and Alerts views. Each technique is documented with command output, detection evidence, and MITRE ATT&CK mapping.
 
@@ -162,7 +162,7 @@ Running MITRE ATT&CK mapped attack simulations using Invoke-AtomicRedTeam agains
 
 ---
 
-### 📋 Phase 4 — GitHub and LinkedIn (In Progress)
+### 📋 Phase 4 - GitHub and LinkedIn (In Progress)
 
 Building out this repository with full documentation for every phase. Publishing a six-post LinkedIn series documenting the complete build for defense contractor and federal cybersecurity hiring audiences.
 
@@ -240,13 +240,13 @@ Invoke-AtomicTest T1059.001 -TestNumbers 1
 
 | Document | Description | Status |
 |---|---|---|
-| [01 - Hardware and Planning](docs/01-hardware-and-planning.md) | Hardware specs, architecture decisions, network setup | 🔄 In Progress |
-| [02 - VMware Setup](docs/02-vmware-setup.md) | VM creation, dual NIC config, known issues and fixes | 🔄 In Progress |
-| [03 - Security Onion Install](docs/03-security-onion-install.md) | ISO verification, setup wizard walkthrough, all config choices | 🔄 In Progress |
-| [04 - Endpoint VM Setup](docs/04-endpoint-vm-setup.md) | Windows 11 VM, VMware Tools, PowerShell 7, snapshot strategy | 🔄 In Progress |
-| [05 - Sysmon Configuration](docs/05-sysmon-configuration.md) | Sysmon install, SwiftOnSecurity config, event ID reference | 🔄 In Progress |
-| [06 - Elastic Agent Setup](docs/06-elastic-agent-setup.md) | Agent install, Fleet enrollment, firewall configuration | 🔄 In Progress |
-| [07 - Pipeline Verification](docs/07-pipeline-verification.md) | End-to-end verification, Kibana queries, Hunt view setup | 🔄 In Progress |
+| [01 - Hardware and Planning](docs/01-hardware-and-planning.md) | Hardware specs, architecture decisions, network setup | ✅ Complete |
+| [02 - VMware Setup](docs/02-vmware-setup.md) | VM creation, dual NIC config, known issues and fixes | ✅ Complete |
+| [03 - Security Onion Install](docs/03-security-onion-install.md) | ISO verification, setup wizard walkthrough, all config choices | ✅ Complete |
+| [04 - Endpoint VM Setup](docs/04-endpoint-vm-setup.md) | Windows 11 VM, VMware Tools, PowerShell 7, snapshot strategy | ✅ Complete |
+| [05 - Sysmon Configuration](docs/05-sysmon-configuration.md) | Sysmon install, SwiftOnSecurity config, event ID reference | ✅ Complete |
+| [06 - Elastic Agent Setup](docs/06-elastic-agent-setup.md) | Agent install, Fleet enrollment, firewall configuration | ✅ Complete |
+| [07 - Pipeline Verification](docs/07-pipeline-verification.md) | End-to-end verification, Kibana queries, Hunt view setup | ✅ Complete |
 | [08 - Attack Simulations](docs/08-attack-simulations.md) | Invoke-AtomicRedTeam usage, test methodology, results | 🔄 In Progress |
 
 ---
@@ -321,5 +321,3 @@ Targeting entry-level SOC Analyst and Junior DevSecOps Engineer roles at defense
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
-
-<p align="center"><i>Built from scratch. Documented in public. One detection at a time.</i></p>
