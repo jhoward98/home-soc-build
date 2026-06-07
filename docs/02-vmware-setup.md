@@ -148,7 +148,14 @@ You now have two network adapters:
 | Network Adapter | Bridged (Automatic) | Management | ens160 |
 | Network Adapter 2 | Host-only | Monitor (passive capture) | ens224 |
 
-**Why two adapters:** this mirrors how a real network security monitoring sensor is deployed. The management interface (bridged) is how you administer the sensor and receive endpoint telemetry. The monitor interface (host-only) exists purely for Zeek and Suricata to passively watch traffic. Keeping the management plane separate from the monitoring plane is standard sensor design. The full rationale is in Doc 01.
+**Why two adapters:** Both adapters belong to the same machine, the Security Onion VM. They are two virtual network cards on that one VM, and what separates them is their VMware connection mode and their job, not which machine they serve.
+
+- **Bridged (management, ens160)** runs through the desktop's physical adapter and out onto your real home network, so the VM appears on the 192.168.0.0/24 subnet as its own device at 192.168.0.50. This is how you administer the sensor, how the endpoint's Elastic Agent ships telemetry in, and how the VM reaches the internet.
+- **Host-only (monitor, ens224)** is a VMware mode that creates a private virtual network isolated from your physical LAN and the internet. The name refers to that isolation, not to ownership of the adapter. This interface exists purely so Zeek and Suricata have a dedicated, passive place to listen, kept separate from management traffic.
+
+Keeping the management plane separate from the monitoring plane is standard sensor design. The full rationale is in Doc 01.
+
+**A note on feeding the monitor interface:** On its own, a host-only interface only sees traffic on its isolated virtual network. It does not automatically see the Windows endpoint's traffic, because the endpoint lives on the bridged side, on a separate machine. To deliver real endpoint network traffic to this interface, you mirror it using a managed switch with a SPAN (Switched Port Analyzer) port, which sends a read-only copy of the traffic to the sensor without sitting in its path. That is the role of the TP-Link TL-SG108E managed switch in the Future Roadmap. Until then, endpoint visibility still comes through strongly, because the Elastic Agent delivers Sysmon and Windows logs over the management interface, which is the source of the 4,879+ events in this build. The SPAN port is what fully lights up the network-capture half of the sensor.
 
 ---
 
